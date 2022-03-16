@@ -2,10 +2,9 @@ import React, { Component, PureComponent } from 'react';
 
 // keyCode constants
 const BACKSPACE = 8;
-const LEFT_ARROW = 37;
-const RIGHT_ARROW = 39;
 const DELETE = 46;
 const SPACEBAR = 32;
+const TAB = 9;
 
 // Doesn't really check if it's a style Object
 // Basic implementation to check if it's not a string
@@ -127,6 +126,17 @@ class OtpInput extends Component {
     activeInput: 0,
   };
 
+  componentDidUpdate() {
+    const otp = this.getOtpValue();
+    const { activeInput } = this.state;
+
+    if (otp.length === 0 && activeInput !== 0) {
+      this.setState({
+        activeInput: 0,
+      });
+    }
+  }
+
   getOtpValue = () => (this.props.value ? this.props.value.toString().split('') : []);
 
   getPlaceholderValue = () => {
@@ -237,14 +247,17 @@ class OtpInput extends Component {
     } else if (e.keyCode === DELETE || e.key === 'Delete') {
       e.preventDefault();
       this.changeCodeAtFocus('');
-    } else if (e.keyCode === LEFT_ARROW || e.key === 'ArrowLeft') {
+    } else if (
+      e.keyCode === SPACEBAR ||
+      e.keyCode === TAB ||
+      e.key === ' ' ||
+      e.key === 'Spacebar' ||
+      e.key === 'Space' ||
+      e.key === 'Tab'
+    ) {
       e.preventDefault();
-      this.focusPrevInput();
-    } else if (e.keyCode === RIGHT_ARROW || e.key === 'ArrowRight') {
-      e.preventDefault();
-      this.focusNextInput();
-    } else if (e.keyCode === SPACEBAR || e.key === ' ' || e.key === 'Spacebar' || e.key === 'Space') {
-      e.preventDefault();
+    } else if (this.isInputValueValid(e.key)) {
+      this.handleOnInput(e);
     }
   };
 
@@ -306,7 +319,7 @@ class OtpInput extends Component {
             this.setState({ activeInput: i });
             e.target.select();
           }}
-          onBlur={() => this.setState({ activeInput: -1 })}
+          onBlur={() => this.setState({ activeInput: i })}
           separator={separator}
           inputStyle={inputStyle}
           focusStyle={focusStyle}
@@ -317,6 +330,11 @@ class OtpInput extends Component {
           errorStyle={errorStyle}
           shouldAutoFocus={shouldAutoFocus}
           isInputNum={isInputNum}
+          onMouseDown={(e) => {
+            if ((!e.target.value && activeInput === 0 && i !== activeInput) || (activeInput !== i && activeInput > 0)) {
+              e.preventDefault();
+            }
+          }}
           isInputSecure={isInputSecure}
           className={className}
           data-cy={dataCy && `${dataCy}-${i}`}
